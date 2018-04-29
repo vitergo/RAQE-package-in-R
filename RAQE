@@ -1,23 +1,21 @@
 #RAQUE function
 
-RAQUE <- function(x, sampleID = NULL, p, upper.tail = TRUE, tail.percentage = 25, plot.empirical = TRUE, use.weights = FALSE){
+RAQUE <- function(x, sampleID = NULL, p, upper.tail = TRUE, tail.percentage = 25, plot.empirical = TRUE, use.weights = FALSE, normalize.values = TRUE){
   #read sample statistics
   #if sampleID is not defined, create the corresponding trivial vector with 1 class
   if(is.null(sampleID) == TRUE){
     sampleID = rep(1,length(x))
   }
   
-  data = data.frame(x, sampleID)
-  
-  xbar = tapply(data$x, data$sampleID, mean)
-  s = tapply(data$x, data$sampleID, sd)
-  n = tapply(data$x, data$sampleID, length)
+  xbar = tapply(x, sampleID, mean)
+  s = tapply(x, sampleID, sd)
+  n = tapply(x, sampleID, length)
   N = sum(n)
   
   #standardize samples
   Xbar = rep(xbar,n)
   S = rep(s,n)
-  z = (data$x - Xbar)/S
+  z = (x - Xbar)/S
   
   #Expand empirical distribution
   o = order(z)
@@ -96,15 +94,39 @@ RAQUE <- function(x, sampleID = NULL, p, upper.tail = TRUE, tail.percentage = 25
   results = list(Xq = Xq, fitted.function = fitted.function[o1[1]], SSEm)
 
   
+  # Plot
+  main.title = "Augmented Empirical Distribution"
+  sub.title = "Normalized Scale and Location"
+  xlab.name = "Augmented Z values"
+  ylab.name = "Probability"
+  
+  # Original values
+  Zmu = 0
+  Zs = 1
+  if(normalize.values != TRUE){
+    Zmu = xbar
+    Zs = s
+    Z = as.vector(Zmu) + as.vector(Zs)*Z
+    zq = Zmu + Zs*zq
+    sub.title = "Original Scale and Location"
+    xlab.name = "Augmented Observations"
+  }
     
   if(plot.empirical == TRUE & fitted.function[o1[1]] == "Weibull"){
     min.Xplot = min(Z,zq)
     max.Xplot = max(Z,zq)
     clases = (max.Xplot - min.Xplot)/50
     xline = seq(from = min.Xplot, to = max.Xplot, by = clases)
-    plot(Z,P, pch = 20, cex = 0.5, xlim = c(min.Xplot,max.Xplot))
+    plot(Z,P,
+         pch = 20,
+         cex = 0.5,
+         xlim = c(min.Xplot,max.Xplot),
+         main = maint.title,
+         sub = sub.title,
+         xlab = xlab.name,
+         ylab = ylab.name)
     points(zq, p, pch = 1, col = "blue")
-    lines(xline, weibull(xline, u = fitWeibull$par[1], a = fitWeibull$par[2], b = fitWeibull$par[3]), type = "l", col = "red")
+    lines(xline, weibull(x = (xline - as.vector(Zmu))/as.vector(Zs), u = fitWeibull$par[1], a = fitWeibull$par[2], b = fitWeibull$par[3]), type = "l", col = "red")
     lines(xline, (xline*0 + p), type = "l", col = "blue")
     abline(v = zq, col = "blue")
   }
@@ -114,9 +136,16 @@ RAQUE <- function(x, sampleID = NULL, p, upper.tail = TRUE, tail.percentage = 25
     max.Xplot = max(Z,zq)
     clases = (max.Xplot - min.Xplot)/50
     xline = seq(from = min.Xplot, to = max.Xplot, by = clases)
-    plot(Z,P, pch = 20, cex = 0.5, xlim = c(min.Xplot,max.Xplot))
+    plot(Z,P,
+         pch = 20,
+         cex = 0.5,
+         xlim = c(min.Xplot,max.Xplot),
+         main = main.title,
+         sub = sub.title,
+         xlab = xlab.name,
+         ylab = ylab.name)
     points(zq, p, pch = 1, col = "blue")
-    lines(xline, gumbel.max(xline, u = fitGumbel.max$par[1], s = fitGumbel.max$par[2]), type = "l", col = "red")
+    lines(xline, gumbel.max(x = (xline - as.vector(Zmu))/as.vector(Zs), u = fitGumbel.max$par[1], s = fitGumbel.max$par[2]), type = "l", col = "red")
     lines(xline, (xline*0 + p), type = "l", col = "blue")
     abline(v = zq, col = "blue")
   }
@@ -126,9 +155,16 @@ RAQUE <- function(x, sampleID = NULL, p, upper.tail = TRUE, tail.percentage = 25
     max.Xplot = max(Z,zq)
     clases = (max.Xplot - min.Xplot)/50
     xline = seq(from = min.Xplot, to = max.Xplot, by = clases)
-    plot(Z,P, pch = 20, cex = 0.5, xlim = c(min.Xplot,max.Xplot))
+    plot(Z,P,
+         pch = 20,
+         cex = 0.5,
+         xlim = c(min.Xplot,max.Xplot),
+         main = main.title,
+         sub = sub.title,
+         xlab = xlab.name,
+         ylab = ylab.name)
     points(zq, p, pch = 1, col = "blue")
-    lines(xline, gumbel.min(xline, u = fitGumbel.min$par[1], s = fitGumbel.min$par[2]), type = "l", col = "red")
+    lines(xline, gumbel.min(x = (xline - as.vector(Zmu))/as.vector(Zs), u = fitGumbel.min$par[1], s = fitGumbel.min$par[2]), type = "l", col = "red")
     lines(xline, (xline*0 + p), type = "l", col = "blue")
     abline(v = zq, col = "blue")
   }
@@ -138,9 +174,16 @@ RAQUE <- function(x, sampleID = NULL, p, upper.tail = TRUE, tail.percentage = 25
     max.Xplot = max(Z,zq)
     clases = (max.Xplot - min.Xplot)/50
     xline = seq(from = min.Xplot, to = max.Xplot, by = clases)
-    plot(Z,P, pch = 20, cex = 0.5, xlim = c(min.Xplot,max.Xplot))
+    plot(Z,P,
+         pch = 20,
+         cex = 0.5,
+         xlim = c(min.Xplot,max.Xplot),
+         main = main.title,
+         sub = sub.title,
+         xlab = xlab.name,
+         ylab = ylab.name)
     points(zq, p, pch = 1, col = "blue")
-    lines(xline, exponential(xline, u = fitExponential$par[1], theta = fitExponential$par[2]), type = "l", col = "red")
+    lines(xline, exponential(x = (xline - as.vector(Zmu))/as.vector(Zs), u = fitExponential$par[1], theta = fitExponential$par[2]), type = "l", col = "red")
     lines(xline, (xline*0 + p), type = "l", col = "blue")
     abline(v = zq, col = "blue")
   }
@@ -150,9 +193,16 @@ RAQUE <- function(x, sampleID = NULL, p, upper.tail = TRUE, tail.percentage = 25
     max.Xplot = max(Z,zq)
     clases = (max.Xplot - min.Xplot)/50
     xline = seq(from = min.Xplot, to = max.Xplot, by = clases)
-    plot(Z,P, pch = 20, cex = 0.5, xlim = c(min.Xplot,max.Xplot))
+    plot(Z,P,
+         pch = 20,
+         cex = 0.5,
+         xlim = c(min.Xplot,max.Xplot),
+         main = main.title,
+         sub = sub.title,
+         xlab = xlab.name,
+         ylab = ylab.name)
     points(zq, p, pch = 1, col = "blue")
-    lines(xline, logit(xline, u = fitLogit$par[1], s = fitLogit$par[2]), type = "l", col = "red")
+    lines(xline, logit(x = (xline - as.vector(Zmu))/as.vector(Zs), u = fitLogit$par[1], s = fitLogit$par[2]), type = "l", col = "red")
     lines(xline, (xline*0 + p), type = "l", col = "blue")
     abline(v = zq, col = "blue")
   }
