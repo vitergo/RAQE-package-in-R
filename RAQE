@@ -1,6 +1,6 @@
 #RAQUE function
 
-RAQUE <- function(x, sampleID = NULL, p, upper.tail = TRUE, tail.percentage = 25, plot.empirical = TRUE, use.weights = FALSE, normalize.values = TRUE){
+RAQUE <- function(x, sampleID = NULL, p, upper.tail = TRUE, tail.percentage = 25, plot.empirical = TRUE, use.weights = FALSE, normalize.values = TRUE, display.results = TRUE){
   #read sample statistics
   #if sampleID is not defined, create the corresponding trivial vector with 1 class
   if(is.null(sampleID) == TRUE){
@@ -10,7 +10,9 @@ RAQUE <- function(x, sampleID = NULL, p, upper.tail = TRUE, tail.percentage = 25
   xbar = tapply(x, sampleID, mean)
   s = tapply(x, sampleID, sd)
   n = tapply(x, sampleID, length)
+  ksamples = length(n) #number of samples
   N = sum(n)
+  IDname = names(xbar)
   
   #standardize samples
   Xbar = rep(xbar,n)
@@ -91,8 +93,55 @@ RAQUE <- function(x, sampleID = NULL, p, upper.tail = TRUE, tail.percentage = 25
   
   Xq = xbar + s*zq
   
-  results = list(Xq = Xq, fitted.function = fitted.function[o1[1]], SSEm)
+  results = list(Xq = Xq, fitted.function = fitted.function[o1[1]], wSSE = SSEm)
 
+  if(display.results == TRUE){
+    # String to use when printing results
+    p.separator ="............................................................................"
+    p.title = "EXTREME VALUE ESTIMATION WITH RAQE."
+    p.input = "Inputs:"
+    p.obs = "observations in"
+    p.sam = "sample(s)."
+    p.request = "Requested quantile for p ="
+    p.samtitle = "Sample(s) Information"
+    p.sample = "Sample"
+    p.restitle = "Estimation Results"
+    p.curvestring = "Curve Ritting Results"
+    p.IDstring = "Sample ID name:"
+    p.fittedstring = "Best fit:"
+    p.otherstring = "All functions and weighed sum of squares:"
+    # Print results starts here
+    cat(p.separator,"\n")
+    
+    cat(p.title,"\n", p.input, N, p.obs, ksamples, p.sam, "\n")
+    cat("",paste0(p.IDstring),IDname,"\n")
+    
+    cat(p.separator,"\n")
+    
+    cat(p.samtitle,"\n")
+    for(l in 1:ksamples){
+      cat("",p.sample, paste0(IDname[l], ":"), paste0("n",l), "=", paste0(n[l], ","), paste("xbar_",l), "=", paste0(round(xbar[l], digits = 3), ","), paste("s_",l), "=", round(s[l], digits = 3), "\n")
+    }
+    
+    cat(p.separator,"\n")
+    
+    cat(p.curvestring,"\n")
+    cat("", p.fittedstring, results$fitted.function, "\n")
+    cat("", p.otherstring,"\n\n")
+    print(round(results$wSSE, digits = 3))
+    cat("\n")
+    
+    cat(p.separator,"\n")
+    
+    cat(p.restitle,"\n")
+    cat("", p.request, p, "\n")
+    for(l in 1:ksamples){
+      cat("",p.sample, IDname[l], "\n")
+      cat("     ","Xp =", round(Xq[l], digits = 3), "\n")
+    }
+    cat(p.separator,"\n")
+    #Print results end here 
+  }
   
   # Plot
   main.title = "Augmented Empirical Distribution"
@@ -206,6 +255,5 @@ RAQUE <- function(x, sampleID = NULL, p, upper.tail = TRUE, tail.percentage = 25
     lines(xline, (xline*0 + p), type = "l", col = "blue")
     abline(v = zq, col = "blue")
   }
-  
-  return(results)
+  invisible(results)
 }
