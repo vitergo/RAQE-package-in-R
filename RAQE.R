@@ -118,9 +118,14 @@ RAQUE <- function(x, sampleID = NULL, p, tail.percentage = 25, plot.empirical = 
     p.taildescription = "Tail proportion used:"
     p.Xpdescription = "and P(X <= Xp) = p"
     p.warning =
-"Warning: By combining samples to improve estimation you are assuming samples
+"WARNING: By combining samples to improve estimation you are assuming samples
 are shape-homogeneous (same shape but different mean and variance). If this
 is not the case, run samples individually."
+    p.warning2 =
+"Note: Request to display Augmented Empirical Distribution Function (AEDF)
+using orignal scale is invalid. When two or more samples are available,
+combined values used to define AED can only be displayed in standard form.
+Set 'normalize.values = TRUE' to avoid this message."
     
     # Print results starts here
     cat(p.separator,"\n")
@@ -159,25 +164,38 @@ is not the case, run samples individually."
       
       cat(p.separator,"\n") 
     }
+    if(ksamples > 1 && normalize.values != TRUE){
+      cat(p.warning2,"\n")
+      
+      cat(p.separator,"\n") 
+    }
     #Print results end here 
   }
   
   # Plot
-  main.title = "Augmented Empirical Distribution"
-  sub.title = "Normalized Scale and Location"
-  xlab.name = "Augmented Z values"
-  ylab.name = "Probability"
   
-  # Original values
-  Zmu = 0
-  Zs = 1
-  if(normalize.values != TRUE){
-    Zmu = xbar
-    Zs = s
-    Z = as.vector(Zmu) + as.vector(Zs)*Z
-    zq = Zmu + Zs*zq
-    sub.title = "Original Scale and Location"
-    xlab.name = "Augmented Observations"
+  # Plot text adjustements
+  if(plot.empirical == TRUE)
+  {
+    main.title = "Augmented Empirical Distribution"
+    sub.title = "Normalized Scale and Location"
+    xlab.name = "Augmented Z values"
+    ylab.name = "Probability"
+    
+    # Original values
+    Zmu = 0
+    Zs = 1
+    if(ksamples == 1 && normalize.values != TRUE){
+      Zmu = xbar
+      Zs = s
+      Z = as.vector(Zmu) + as.vector(Zs)*Z
+      zq = Zmu + Zs*zq
+      sub.title = "Original Scale and Location"
+      xlab.name = "Augmented Observations"
+    }
+    if(ksamples > 1){
+      xlab.name = "Augmented Z values of combined samples"
+    } 
   }
     
   if(plot.empirical == TRUE & fitted.function[o1[1]] == "Weibull"){
@@ -199,6 +217,7 @@ is not the case, run samples individually."
     abline(v = zq, col = "blue")
   }
   
+  # Actual plotting
   if(plot.empirical == TRUE & fitted.function[o1[1]] == "Gumbel.max"){
     min.Xplot = min(Z,zq)
     max.Xplot = max(Z,zq)
@@ -274,5 +293,7 @@ is not the case, run samples individually."
     lines(xline, (xline*0 + p), type = "l", col = "blue")
     abline(v = zq, col = "blue")
   }
-  invisible(results)
+  
+  # Results to be included as invisible output
+  invisible(results) # only available if results are assigned to a variable.
 }
