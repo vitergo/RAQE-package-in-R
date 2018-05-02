@@ -1,6 +1,6 @@
 #RAQUE function
 
-RAQUE <- function(x, sampleID = NULL, p, tail.percentage = 25, plot.empirical = TRUE, use.weights = FALSE, normalize.values = TRUE, display.results = TRUE){
+RAQUE <- function(x, sampleID = NULL, p, tail.percentage = 25, plot.empirical = TRUE, use.weights = FALSE, normalize.values = TRUE, display.results = TRUE, save.AEDFvalues = FALSE){
   #read sample statistics
   #if sampleID is not defined, create the corresponding trivial vector with 1 class
   if(is.null(sampleID) == TRUE){
@@ -94,12 +94,16 @@ RAQUE <- function(x, sampleID = NULL, p, tail.percentage = 25, plot.empirical = 
   rownames(SSEm) <- c("SSEw")
   
   o1 = order(SSE)
-  zq = q[o1[1]]
+  zq = q[o1[1]] #estimated quantile in standard form
   
-  Xq = xbar + s*zq
+  Xq = xbar + s*zq #estimated quantile
   
-  results = list(Xq = Xq, fitted.function = fitted.function[o1[1]], wSSE = SSEm)
-
+  best.fit = fitted.function[o1[1]] # best fit function
+  wSSE.best = SSE[o1[1]]
+  
+  #Gathering the first results
+  results = list(requested.p = p, tail.percentage = tail.percentage, Xq = Xq, best.fit = best.fit, wSSE = SSEm, wSSE.best = wSSE.best)
+  
   if(display.results == TRUE){
     # String to use when printing results
     p.separator ="............................................................................"
@@ -118,14 +122,14 @@ RAQUE <- function(x, sampleID = NULL, p, tail.percentage = 25, plot.empirical = 
     p.taildescription = "Tail proportion used:"
     p.Xpdescription = "and P(X <= Xp) = p"
     p.warning =
-"WARNING: By combining samples to improve estimation you are assuming samples
-are shape-homogeneous (same shape but different mean and variance). If this
-is not the case, run samples individually."
+      "WARNING: By combining samples to improve estimation you are assuming samples
+    are shape-homogeneous (same shape but different mean and variance). If this
+    is not the case, run samples individually."
     p.warning2 =
-"Note: Request to display Augmented Empirical Distribution Function (AEDF)
-using orignal scale is invalid. When two or more samples are available,
-combined values used to define AED can only be displayed in standard form.
-Set 'normalize.values = TRUE' to avoid this message."
+      "Note: Request to display Augmented Empirical Distribution Function (AEDF)
+    using orignal scale is invalid. When two or more samples are available,
+    combined values used to define AED can only be displayed in standard form.
+    Set 'normalize.values = TRUE' to avoid this message."
     
     # Print results starts here
     cat(p.separator,"\n")
@@ -177,7 +181,7 @@ Set 'normalize.values = TRUE' to avoid this message."
   # Plot text adjustements
   if(plot.empirical == TRUE)
   {
-    main.title = "Augmented Empirical Distribution"
+    main.title = "Augmented Empirical Distribution Function"
     sub.title = "Normalized Scale and Location"
     xlab.name = "Augmented Z values"
     ylab.name = "Probability"
@@ -197,7 +201,7 @@ Set 'normalize.values = TRUE' to avoid this message."
       xlab.name = "Augmented Z values of combined samples"
     } 
   }
-    
+  
   if(plot.empirical == TRUE & fitted.function[o1[1]] == "Weibull"){
     min.Xplot = min(Z,zq)
     max.Xplot = max(Z,zq)
@@ -295,5 +299,9 @@ Set 'normalize.values = TRUE' to avoid this message."
   }
   
   # Results to be included as invisible output
+  if(save.AEDFvalues == TRUE){
+    results$AEDF.X = as.numeric(Z)
+    results$AEDF.Y = as.numeric(P) 
+  }
   invisible(results) # only available if results are assigned to a variable.
 }
